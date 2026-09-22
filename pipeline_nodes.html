@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain Pipeline - Python Nodes & Functions</title>
+    <style>
+        :root {
+            --bg: #090d16;
+            --surface: #131b2e;
+            --surface-card: #1a243b;
+            --border: #293552;
+            --border-highlight: #3b82f6;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --code-bg: #0b1120;
+            --accent-local: #a855f7;
+            --accent-cloud: #22c55e;
+            --accent-db: #eab308;
+            --accent-ui: #38bdf8;
+            --accent-orange: #f97316;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a855f7, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 2.5rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #e2e8f0;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .pipeline-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Pipe chain syntax banner */
+        .chain-syntax {
+            background: var(--code-bg);
+            border: 1px solid #3b82f6;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.95rem;
+            color: #93c5fd;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .chain-syntax span.pipe { color: #f43f5e; font-weight: bold; }
+        .chain-syntax span.fn { color: #a855f7; }
+        .chain-syntax span.var { color: #38bdf8; }
+
+        /* Node Item */
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .node-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-left: 6px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .node-card:hover {
+            border-color: #64748b;
+            transform: translateX(4px);
+        }
+
+        .node-card.local-node { border-left-color: var(--accent-local); }
+        .node-card.cloud-node { border-left-color: var(--accent-cloud); }
+        .node-card.db-node    { border-left-color: var(--accent-db); }
+        .node-card.ui-node    { border-left-color: var(--accent-ui); }
+
+        .node-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .node-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .node-num {
+            background: #1e293b;
+            color: #f8fafc;
+            font-weight: 800;
+            font-size: 0.85rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .node-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-file { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.3); }
+        .badge-exec-local { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .badge-exec-cloud { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+        .node-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #1e293b;
+        }
+
+        .data-box h5 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .data-box code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            word-break: break-all;
+        }
+
+        .connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: #64748b;
+            font-size: 0.9rem;
+            font-family: ui-monospace, monospace;
+            margin: -0.25rem 0;
+        }
+
+        .code-snippet {
+            margin-top: 0.75rem;
+            font-family: ui-monospace, monospace;
+            font-size: 0.85rem;
+            background: #020617;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #1e293b;
+            color: #a5b4fc;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            .node-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Python Pipeline & Execution Nodes</h1>
+            <p>Every file, function, class, input, and output mapped step-by-step</p>
+        </header>
+
+        <!-- SECTION 1: ORCHESTRATION IN APP.PY -->
+        <h2 class="section-title">⚡ 1. Live Chat Orchestration (app.py)</h2>
+        <div class="pipeline-card">
+            
+            <div class="chain-syntax">
+                // The exact LangChain LCEL chain executing in your Python process:<br>
+                <span class="var">rag_chain</span> = (
+                    {<span class="fn">"context"</span>: retriever <span class="pipe">|</span> format_docs, <span class="fn">"question"</span>: RunnablePassthrough()} 
+                    <span class="pipe">|</span> prompt 
+                    <span class="pipe">|</span> llm 
+                    <span class="pipe">|</span> StrOutputParser()
+                )
+            </div>
+
+            <div class="node-container">
+
+                <!-- Node 1 -->
+                <div class="node-card local-node">
+                    <div class="node-header">
+                        <div class="node-title-group">
+                            <span class="node-num">NODE 01</span>
+                            <div class="node-title">Parallel Context Retrieval & Question Pass-through</div>
+                        </div>
+                        <div class="badge-group">
+                            <span class="badge badge-file">app.py</span>
+                            <span class="badge badge-exec-local">100% Local Python</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        Splits the incoming question into two parallel operations: 
+                        <strong>Branch A</strong> uses <code>vector_store.as_retriever()</code> to search FAISS and formats chunks with <code>format_docs()</code>. 
+                        <strong>Branch B</strong> passes the raw question through unchanged using <code>RunnablePassthrough()</code>.
+                    </p>
+                    <div class="code-snippet">
+                        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+                    </div>
+                    <div class="node-details">
+                        <div class="data-box">
+                            <h5>Input Data</h5>
+                            <code>str: "What is RAG and how does it reduce hallucinations?"</code>
+                        </div>
+                        <div class="data-box">
+                            <h5>Output Data</h5>
+                            <code>dict: {"context": "Retrieval-Augmented Generation...", "question": "What is RAG..."}</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector">│ &nbsp; Pipe Operator (|) passes dictionary forward</div>
+
+                <!-- Node 2 -->
+                <div class="node-card local-node">
+                    <div class="node-header">
+                        <div class="node-title-group">
+                            <span class="node-num">NODE 02</span>
+                            <div class="node-title">Prompt Template Formatter</div>
+                        </div>
+                        <div class="badge-group">
+                            <span class="badge badge-file">app.py</span>
+                            <span class="badge badge-exec-local">100% Local Python</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        <strong>Class:</strong> <code>ChatPromptTemplate.from_template()</code><br>
+                        Fills the dictionary values into the system template string (controlled by your Strict Mode toggle).
+                    </p>
+                    <div class="code-snippet">
+                        template = """Answer the question based ONLY on the following context:\n{context}\n\nQuestion: {question}"""
+                    </div>
+                    <div class="node-details">
+                        <div class="data-box">
+                            <h5>Input Data</h5>
+                            <code>dict: {"context": "...", "question": "..."}</code>
+                        </div>
+                        <div class="data-box">
+                            <h5>Output Data</h5>
+                            <code>PromptValue (Formatted System + User instructions)</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector">│ &nbsp; Pipe Operator (|) passes formatted prompt forward</div>
+
+                <!-- Node 3 -->
+                <div class="node-card cloud-node">
+                    <div class="node-header">
+                        <div class="node-title-group">
+                            <span class="node-num">NODE 03</span>
+                            <div class="node-title">Generative AI Inference (with Fallback)</div>
+                        </div>
+                        <div class="badge-group">
+                            <span class="badge badge-file">app.py</span>
+                            <span class="badge badge-exec-cloud">HTTP API Request</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        <strong>Classes:</strong> <code>ChatGoogleGenerativeAI</code> (Primary: gemini-3.5-flash) with <code>ChatGroq</code> fallback.<br>
+                        Sends HTTP POST with the full prompt to Google. If rate-limited or unavailable, routes seamlessly to Groq.
+                    </p>
+                    <div class="code-snippet">
+                        gemini_llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash")<br>
+                        llm = gemini_llm.with_fallbacks([groq_llm])
+                    </div>
+                    <div class="node-details">
+                        <div class="data-box">
+                            <h5>Input Data</h5>
+                            <code>PromptValue string via HTTP payload</code>
+                        </div>
+                        <div class="data-box">
+                            <h5>Output Data</h5>
+                            <code>AIMessage (text content + token usage metadata)</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector">│ &nbsp; Pipe Operator (|) passes AIMessage forward</div>
+
+                <!-- Node 4 -->
+                <div class="node-card local-node">
+                    <div class="node-header">
+                        <div class="node-title-group">
+                            <span class="node-num">NODE 04</span>
+                            <div class="node-title">String Output Parser</div>
+                        </div>
+                        <div class="badge-group">
+                            <span class="badge badge-file">app.py</span>
+                            <span class="badge badge-exec-local">100% Local Python</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        <strong>Class:</strong> <code>StrOutputParser()</code><br>
+                        Extracts the pure text string from the AIMessage object so Streamlit can render it cleanly.
+                    </p>
+                    <div class="code-snippet">
+                        response = rag_chain.invoke(prompt) // Returns clean string
+                    </div>
+                    <div class="node-details">
+                        <div class="data-box">
+                            <h5>Input Data</h5>
+                            <code>AIMessage(content="Retrieval-Augmented Generation...", id="...")</code>
+                        </div>
+                        <div class="data-box">
+                            <h5>Output Data</h5>
+                            <code>str: "Retrieval-Augmented Generation (RAG) is a technique..."</code>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: TEXT SPLITTING & INGESTION -->
+        <h2 class="section-title">📚 2. Text Splitting & Database Ingestion (vector_store.py)</h2>
+        <div class="pipeline-card">
+            <div class="node-container">
+
+                <!-- Splitter Node A -->
+                <div class="node-card local-node">
+                    <div class="node-header">
+                        <div class="node-title-group">
+                            <span class="node-num">STEP A</span>
+                            <div class="node-title">File Reading</div>
+                        </div>
+                        <div class="badge-group">
+                            <span class="badge badge-file">vector_store.py</span>
+                            <span class="badge badge-exec-local">Local File I/O</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        <strong>Class:</strong> <code>TextLoader(file_path, encoding='utf-8')</code><br>
+                        Reads raw <code>data/sample.txt</code> into Python memory as a single Document object.
+                    </p>
+                </div>
+
+                <div class="connector">↓ Sends single raw document</div>
+
+                <!-- Splitter Node B -->
+                <div class="node-card local-node">
+                    <div class="node-header">
+                        <div class="node-title-group">
+                            <span class="node-num">STEP B</span>
+                            <div class="node-title">Recursive Character Text Splitter</div>
+                        </div>
+                        <div class="badge-group">
+                            <span class="badge badge-file">vector_store.py</span>
+                            <span class="badge badge-exec-local">Local String Logic</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        <strong>Class:</strong> <code>RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)</code><br>
+                        Splits on paragraphs (<code>\n\n</code>), sentences (<code>\n</code>), then spaces. Leaves 50 overlapping characters between chunks so sentences aren't chopped mid-thought.
+                    </p>
+                    <div class="node-details">
+                        <div class="data-box">
+                            <h5>Input</h5>
+                            <code>1 Document of 1,200 characters</code>
+                        </div>
+                        <div class="data-box">
+                            <h5>Output</h5>
+                            <code>List of 2-3 chunked Documents (~500 chars each)</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector">↓ Sends chunk text over HTTP</div>
+
+                <!-- Splitter Node C -->
+                <div class="node-card cloud-node">
+                    <div class="node-header">
+                        <div class="node-title-group">
+                            <span class="node-num">STEP C</span>
+                            <div class="node-title">Google Embeddings API</div>
+                        </div>
+                        <div class="badge-group">
+                            <span class="badge badge-file">vector_store.py</span>
+                            <span class="badge badge-exec-cloud">Cloud Embeddings</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        <strong>Class:</strong> <code>GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2")</code><br>
+                        Takes each chunk of English text and translates its semantic meaning into a list of 768 floating-point numbers.
+                    </p>
+                </div>
+
+                <div class="connector">↓ Returns vector numbers to disk</div>
+
+                <!-- Splitter Node D -->
+                <div class="node-card db-node">
+                    <div class="node-header">
+                        <div class="node-title-group">
+                            <span class="node-num">STEP D</span>
+                            <div class="node-title">FAISS Index Creation</div>
+                        </div>
+                        <div class="badge-group">
+                            <span class="badge badge-file">vector_store.py</span>
+                            <span class="badge badge-exec-local">Local FAISS Index</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        <strong>Functions:</strong> <code>FAISS.from_documents(chunks, embeddings)</code> & <code>vector_store.save_local(DB_DIR)</code><br>
+                        Builds an index of vectors and serializes them into the <code>faiss_db/</code> folder on your hard drive.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
