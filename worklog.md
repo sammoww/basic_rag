@@ -63,7 +63,10 @@
 - Updated `.gitignore` to ensure `faiss_db/`, `chroma_db/`, and `*.log` are properly ignored alongside `.env` and `venv/`.
 - Initialized local Git repository on `main` branch.
 - Created initial Git commit for project files.
+- Linked remote `origin` (`https://github.com/sammoww/basic_rag.git`) and pushed `main` branch with upstream tracking.
 
 ### What worked
 - Git initialized cleanly with all sensitive environment variables, virtual environments, and binary vector indices ignored.
+- Initial code pushed successfully to GitHub repository.
+
 
