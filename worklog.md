@@ -64,9 +64,17 @@
 - Initialized local Git repository on `main` branch.
 - Created initial Git commit for project files.
 - Linked remote `origin` (`https://github.com/sammoww/basic_rag.git`) and pushed `main` branch with upstream tracking.
+- Added Section 6 to `things_you_did_not_know_about_python.md` documenting Eager vs. Lazy Loading (`load()` vs. `lazy_load()`), Python generator lifecycle, Garbage Collection mechanics, and buffer/batch size controls.
 
 ### What worked
 - Git initialized cleanly with all sensitive environment variables, virtual environments, and binary vector indices ignored.
 - Initial code pushed successfully to GitHub repository.
+- Expanded reference documentation with clear breakdowns of memory management in RAG ingestion pipelines.
 
+## 2026-09-23
+### What was done
+- Added Section 7 to `things_you_did_not_know_about_python.md`: Detailed solutions for ingesting massive "pageless" `.txt` files (line/paragraph streaming, disk pre-splitting, memory mapping).
+- Added Section 8 to `things_you_did_not_know_about_python.md`: Demystified Python OOP fundamentals (`class`, `__init__`, `self`, `yield` generator mechanics, and LangChain `BaseLoader` inheritance) with a mental model table and sequence diagram.
 
+### What worked
+- Reference guide extended with clean, separated topics for future review.
